@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://operations-amazingmelton1.vercel.app"),
+  metadataBase: new URL("https://operations-mu.vercel.app"),
   title: "Amazing Tiles | Pickup & Delivery Operations",
   description:
     "A sample operations dashboard for Amazing Tiles pickups and deliveries across Melbourne.",
