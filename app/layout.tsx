@@ -13,11 +13,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Starter Project",
-  description: "A clean starting point for building your site.",
+  metadataBase: new URL("https://operations-amazingmelton1.vercel.app"),
+  title: "Amazing Tiles | Pickup & Delivery Operations",
+  description:
+    "A sample operations dashboard for Amazing Tiles pickups and deliveries across Melbourne.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
+  },
+  openGraph: {
+    title: "Amazing Tiles — Pickup & Delivery Operations",
+    description:
+      "A live sample dashboard for tile pickups and deliveries across Melbourne.",
+    images: ["/og.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Amazing Tiles — Pickup & Delivery Operations",
+    description:
+      "A live sample dashboard for tile pickups and deliveries across Melbourne.",
+    images: ["/og.png"],
   },
 };
 
@@ -28,9 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>
     </html>
