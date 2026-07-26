@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useSyncExternalStore } from "react";
 
 type TaskType = "Pickup" | "Delivery" | "Container";
 type TaskStatus =
@@ -34,6 +34,35 @@ type Transfer = {
   requestedAt: string;
   status: "Requested" | "Approved" | "Rejected" | "Ready for Transfer" | "Received";
 };
+
+type UserSession = {
+  role: "manager" | "warehouse";
+  name: string;
+  email: string;
+  warehouse?: string;
+};
+
+const SESSION_KEY = "amazing-tiles-session";
+
+function subscribeToSession(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("amazing-tiles-session", onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("amazing-tiles-session", onStoreChange);
+  };
+}
+
+function getSessionSnapshot() {
+  return (
+    window.sessionStorage.getItem(SESSION_KEY) ??
+    window.localStorage.getItem(SESSION_KEY)
+  );
+}
+
+function getServerSessionSnapshot() {
+  return null;
+}
 
 const warehouses = [
   {
@@ -184,7 +213,6 @@ function StatusPill({ status }: { status: TaskStatus | Transfer["status"] }) {
 
 export default function Home() {
   const [section, setSection] = useState("dashboard");
-  const [mode, setMode] = useState<"manager" | "warehouse">("manager");
   const [mobileNav, setMobileNav] = useState(false);
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<TaskType>("Pickup");
@@ -193,6 +221,36 @@ export default function Home() {
   const [warehouseFilter, setWarehouseFilter] = useState("All warehouses");
   const [statusFilter, setStatusFilter] = useState("All statuses");
   const [search, setSearch] = useState("");
+  const storedSession = useSyncExternalStore(
+    subscribeToSession,
+    getSessionSnapshot,
+    getServerSessionSnapshot,
+  );
+  const session = useMemo(() => {
+    if (!storedSession) return null;
+    try {
+      return JSON.parse(storedSession) as UserSession;
+    } catch {
+      return null;
+    }
+  }, [storedSession]);
+
+  function signIn(nextSession: UserSession, remember: boolean) {
+    const storage = remember ? window.localStorage : window.sessionStorage;
+    window.localStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem(SESSION_KEY);
+    storage.setItem(SESSION_KEY, JSON.stringify(nextSession));
+    window.dispatchEvent(new Event("amazing-tiles-session"));
+    setSection("dashboard");
+  }
+
+  function signOut() {
+    window.localStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem(SESSION_KEY);
+    window.dispatchEvent(new Event("amazing-tiles-session"));
+    setSection("dashboard");
+    setMobileNav(false);
+  }
 
   const filteredTasks = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -255,8 +313,23 @@ export default function Home() {
     );
   }
 
+  if (!session) {
+    return <LoginScreen onSignIn={signIn} />;
+  }
+
+  const mode = session.role;
+  const activeWarehouse = session.warehouse ?? "Sunshine";
+  const currentWarehouse =
+    warehouses.find((warehouse) => warehouse.name === activeWarehouse) ?? warehouses[0];
+  const initials = session.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   const pageTitle =
-    mode === "warehouse"
+    mode === "warehouse" && section === "dashboard"
       ? "My tasks"
       : section === "dashboard"
         ? "Operations overview"
@@ -279,13 +352,18 @@ export default function Home() {
 
         <nav className="side-nav" aria-label="Main navigation">
           <p>Workspace</p>
-          {navItems.map((item) => (
+          {(mode === "manager"
+            ? navItems
+            : [
+                { id: "dashboard", label: "My tasks", icon: "✓" },
+                { id: "warehouses", label: "Warehouse network", icon: "▦" },
+              ]
+          ).map((item) => (
             <button
-              className={section === item.id && mode === "manager" ? "active" : ""}
+              className={section === item.id ? "active" : ""}
               key={item.id}
               onClick={() => {
                 setSection(item.id);
-                setMode("manager");
                 setMobileNav(false);
               }}
             >
@@ -299,19 +377,31 @@ export default function Home() {
         </nav>
 
         <div className="warehouse-summary">
-          <p>Warehouse network</p>
-          <strong>3 locations online</strong>
+          <p>{mode === "manager" ? "Warehouse network" : "Signed in at"}</p>
+          <strong>{mode === "manager" ? "3 locations online" : activeWarehouse}</strong>
           <div className="online-row">
-            <span />
-            <span />
-            <span />
+            {mode === "manager" ? (
+              <>
+                <span />
+                <span />
+                <span />
+              </>
+            ) : (
+              <span />
+            )}
           </div>
         </div>
 
-        <button className="help-link">
-          <span>?</span>
-          Help &amp; support
-        </button>
+        <div className="sidebar-footer">
+          <button className="help-link">
+            <span>?</span>
+            Help &amp; support
+          </button>
+          <button className="signout-link" onClick={signOut}>
+            <span>↪</span>
+            Sign out
+          </button>
+        </div>
       </aside>
 
       {mobileNav ? <button className="nav-scrim" onClick={() => setMobileNav(false)} aria-label="Close menu" /> : null}
@@ -321,13 +411,10 @@ export default function Home() {
           <button className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation">
             ☰
           </button>
-          <div className="view-switcher" aria-label="Switch prototype view">
-            <button className={mode === "manager" ? "active" : ""} onClick={() => setMode("manager")}>
-              Manager view
-            </button>
-            <button className={mode === "warehouse" ? "active" : ""} onClick={() => setMode("warehouse")}>
-              Warehouse view
-            </button>
+          <div className="session-context">
+            <span>{mode === "manager" ? "Manager workspace" : `${activeWarehouse} warehouse`}</span>
+            <i />
+            <small>Prototype access</small>
           </div>
           <div className="top-actions">
             <button className="icon-button" aria-label="Notifications">
@@ -335,10 +422,10 @@ export default function Home() {
               <i />
             </button>
             <div className="profile">
-              <span>AM</span>
+              <span>{initials}</span>
               <div>
-                <strong>Alex Morgan</strong>
-                <small>Operations Manager</small>
+                <strong>{session.name}</strong>
+                <small>{mode === "manager" ? "Operations Manager" : "Warehouse Team"}</small>
               </div>
             </div>
           </div>
@@ -351,7 +438,7 @@ export default function Home() {
               <h1>{pageTitle}</h1>
               <p>
                 {mode === "warehouse"
-                  ? "Your Sunshine tasks are pinned first. Update them as work progresses."
+                  ? `Your ${activeWarehouse} tasks are pinned first. Update them as work progresses.`
                   : section === "dashboard"
                     ? "Everything moving through your warehouse network today."
                     : section === "tasks"
@@ -368,8 +455,13 @@ export default function Home() {
             ) : null}
           </div>
 
-          {mode === "warehouse" ? (
-            <WarehouseDashboard tasks={tasks} onStatus={updateTaskStatus} />
+          {mode === "warehouse" && section === "dashboard" ? (
+            <WarehouseDashboard
+              tasks={tasks}
+              onStatus={updateTaskStatus}
+              activeWarehouse={activeWarehouse}
+              teamMember={session.name}
+            />
           ) : section === "dashboard" ? (
             <Dashboard
               tasks={tasks}
@@ -390,8 +482,15 @@ export default function Home() {
             />
           ) : section === "transfers" ? (
             <TransfersView transfers={transfers} onUpdate={updateTransfer} />
-          ) : (
+          ) : section === "warehouses" ? (
             <WarehousesView tasks={tasks} />
+          ) : (
+            <WarehouseDashboard
+              tasks={tasks}
+              onStatus={updateTaskStatus}
+              activeWarehouse={activeWarehouse}
+              teamMember={currentWarehouse.member}
+            />
           )}
         </main>
       </div>
@@ -405,6 +504,177 @@ export default function Home() {
         />
       ) : null}
     </div>
+  );
+}
+
+function LoginScreen({
+  onSignIn,
+}: {
+  onSignIn: (session: UserSession, remember: boolean) => void;
+}) {
+  const [role, setRole] = useState<UserSession["role"]>("manager");
+  const [warehouse, setWarehouse] = useState("Sunshine");
+  const [showPassword, setShowPassword] = useState(false);
+
+  function submitLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    onSignIn(
+      {
+        role,
+        name: String(data.get("name")).trim(),
+        email: String(data.get("email")).trim(),
+        warehouse: role === "warehouse" ? warehouse : undefined,
+      },
+      data.get("remember") === "on",
+    );
+  }
+
+  return (
+    <main className="login-page">
+      <section className="login-story" aria-label="Amazing Tiles Operations introduction">
+        <div className="login-brand">
+          <div className="brand-tile">AT</div>
+          <div>
+            <strong>Amazing Tiles</strong>
+            <span>Operations</span>
+          </div>
+        </div>
+
+        <div className="story-copy">
+          <p className="login-eyebrow">One connected operation</p>
+          <h1>Every warehouse.<br />One clear plan.</h1>
+          <p>
+            Keep pickups, deliveries, container arrivals and stock transfers organised
+            across Sunshine, Hoppers Crossing and Melton.
+          </p>
+        </div>
+
+        <div className="warehouse-route" aria-label="Connected warehouse locations">
+          {warehouses.map((item, index) => (
+            <div className="route-location" key={item.name}>
+              <span>{item.name.slice(0, 2).toUpperCase()}</span>
+              <div>
+                <strong>{item.name}</strong>
+                <small>{item.label}</small>
+              </div>
+              {index < warehouses.length - 1 ? <i /> : null}
+            </div>
+          ))}
+        </div>
+
+        <div className="login-note">
+          <span>✓</span>
+          <p>
+            <strong>Built for the daily warehouse workflow</strong>
+            <small>Clear assignments, live statuses and fewer missed tasks.</small>
+          </p>
+        </div>
+      </section>
+
+      <section className="login-panel">
+        <div className="login-card">
+          <div className="login-heading">
+            <p>Welcome back</p>
+            <h2>Sign in to Operations</h2>
+            <span>Choose your access type to continue.</span>
+          </div>
+
+          <div className="role-picker" aria-label="Choose login type">
+            <button className={role === "manager" ? "active" : ""} onClick={() => setRole("manager")}>
+              <span className="role-icon">◎</span>
+              <span>
+                <strong>Manager</strong>
+                <small>All warehouses</small>
+              </span>
+              <i />
+            </button>
+            <button className={role === "warehouse" ? "active" : ""} onClick={() => setRole("warehouse")}>
+              <span className="role-icon">▦</span>
+              <span>
+                <strong>Warehouse team</strong>
+                <small>Assigned tasks</small>
+              </span>
+              <i />
+            </button>
+          </div>
+
+          <form className="login-form" onSubmit={submitLogin}>
+            <label>
+              Full name
+              <input
+                name="name"
+                autoComplete="name"
+                placeholder={role === "manager" ? "e.g. Alex Morgan" : "e.g. Dipu Rai"}
+                required
+              />
+            </label>
+            <label>
+              Work email
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="name@amazingtiles.com.au"
+                required
+              />
+            </label>
+            {role === "warehouse" ? (
+              <label>
+                Your warehouse
+                <select value={warehouse} onChange={(event) => setWarehouse(event.target.value)}>
+                  {warehouses.map((item) => (
+                    <option key={item.name}>{item.name}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <label>
+              Password
+              <span className="password-field">
+                <input
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  minLength={4}
+                  required
+                />
+                <button type="button" onClick={() => setShowPassword((visible) => !visible)}>
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </span>
+            </label>
+
+            <div className="login-options">
+              <label>
+                <input name="remember" type="checkbox" defaultChecked />
+                Remember this device
+              </label>
+              <span>Contact your manager for access</span>
+            </div>
+
+            <button className="login-submit" type="submit">
+              Sign in as {role === "manager" ? "Manager" : "Warehouse Team"}
+              <span>→</span>
+            </button>
+          </form>
+
+          <div className="prototype-notice">
+            <span>i</span>
+            <p>
+              <strong>Prototype login</strong>
+              <small>Use any email and password. Passwords are never saved.</small>
+            </p>
+          </div>
+        </div>
+
+        <footer className="login-footer">
+          <span>© 2026 Amazing Tiles &amp; Stone</span>
+          <span>Private operations workspace</span>
+        </footer>
+      </section>
+    </main>
   );
 }
 
@@ -739,12 +1009,16 @@ function WarehousesView({ tasks }: { tasks: Task[] }) {
 function WarehouseDashboard({
   tasks,
   onStatus,
+  activeWarehouse,
+  teamMember,
 }: {
   tasks: Task[];
   onStatus: (id: number, status: TaskStatus) => void;
+  activeWarehouse: string;
+  teamMember: string;
 }) {
   const [scope, setScope] = useState<"mine" | "all">("mine");
-  const visible = scope === "mine" ? tasks.filter((task) => task.warehouse === "Sunshine") : tasks;
+  const visible = scope === "mine" ? tasks.filter((task) => task.warehouse === activeWarehouse) : tasks;
 
   return (
     <>
@@ -758,7 +1032,7 @@ function WarehouseDashboard({
           </button>
         </div>
         <span>
-          <i /> Sunshine · Online
+          <i /> {activeWarehouse} · {teamMember} · Online
         </span>
       </div>
       <section className="mobile-task-list">
@@ -768,7 +1042,7 @@ function WarehouseDashboard({
           <small>{visible.filter((task) => task.date === "2026-07-25").length} tasks</small>
         </div>
         {visible.map((task) => (
-          <article className={task.warehouse === "Sunshine" ? "own-task" : ""} key={task.id}>
+          <article className={task.warehouse === activeWarehouse ? "own-task" : ""} key={task.id}>
             <div className={`task-type-icon type-${task.type.toLowerCase()}`}>{typeIcons[task.type]}</div>
             <div className="mobile-task-copy">
               <div>
@@ -784,7 +1058,7 @@ function WarehouseDashboard({
             </div>
             <div className="task-card-actions">
               <StatusPill status={task.status} />
-              {task.warehouse === "Sunshine" && task.status === "Pending" ? (
+              {task.warehouse === activeWarehouse && task.status === "Pending" ? (
                 <button
                   onClick={() =>
                     onStatus(task.id, task.type === "Pickup" ? "Ready for Pickup" : "Ready for Delivery")
@@ -792,7 +1066,7 @@ function WarehouseDashboard({
                 >
                   Mark ready
                 </button>
-              ) : task.warehouse === "Sunshine" && task.status.includes("Ready") ? (
+              ) : task.warehouse === activeWarehouse && task.status.includes("Ready") ? (
                 <button onClick={() => onStatus(task.id, "Completed")}>Complete</button>
               ) : null}
             </div>
