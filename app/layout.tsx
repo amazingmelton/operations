@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Roboto_Flex } from "next/font/google";
 import "./globals.css";
+
+const roboto = Roboto_Flex({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-roboto",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://operations-mu.vercel.app"),
@@ -31,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={roboto.variable}>
       <body>{children}</body>
     </html>
   );

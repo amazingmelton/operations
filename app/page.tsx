@@ -42,6 +42,63 @@ type UserSession = {
   warehouse?: string;
 };
 
+type IconName =
+  | "dashboard"
+  | "tasks"
+  | "transfer"
+  | "warehouse"
+  | "pickup"
+  | "delivery"
+  | "container"
+  | "schedule"
+  | "warning"
+  | "notifications"
+  | "menu"
+  | "search"
+  | "manager"
+  | "team"
+  | "help"
+  | "logout"
+  | "arrow"
+  | "close"
+  | "check";
+
+const iconPaths: Record<IconName, string> = {
+  dashboard: "M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z",
+  tasks: "M9 11.17 6.83 9l-1.42 1.41L9 14 18.59 4.41 17.17 3 9 11.17ZM19 19H5V5h9V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V9h-2v10Z",
+  transfer: "m7.41 7.41 1.42 1.42L5.66 12H21v-2H5.66l3.17-3.17-1.42-1.42ZM16.59 16.59l-1.42-1.42L18.34 12H3v2h15.34l-3.17 3.17 1.42 1.42Z",
+  warehouse: "M3 21V8l9-5 9 5v13h-6v-6H9v6H3Zm2-2h2v-6h10v6h2V9.18l-7-3.89-7 3.89V19Zm4-8h6V9H9v2Z",
+  pickup: "M20 2H4a2 2 0 0 0-2 2v3.01A2 2 0 0 0 3 9v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0 1-1.73V4a2 2 0 0 0-2-2Zm-1 18H5V9h14v11Zm1-13H4V4h16v3Zm-5 5H9v2h6v-2Z",
+  delivery: "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2.17a3 3 0 0 0 5.66 0h6.34a3 3 0 0 0 5.66 0H23v-5l-3-4ZM6 18.5A1.5 1.5 0 1 1 6 15a1.5 1.5 0 0 1 0 3.5ZM15 15H8.82A3 3 0 0 0 3 15V6h12v9Zm3 3.5a1.5 1.5 0 1 1 0-3.5 1.5 1.5 0 0 1 0 3.5ZM17 12V9.5h2.5l1.96 2.5H17Z",
+  container: "M3 4h18v16H3V4Zm2 2v12h2V6H5Zm4 0v12h2V6H9Zm4 0v12h2V6h-2Zm4 0v12h2V6h-2Z",
+  schedule: "M11.99 2A10 10 0 1 0 12 22a10 10 0 0 0-.01-20ZM12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7Z",
+  warning: "M1 21h22L12 2 1 21Zm12-3h-2v-2h2v2Zm0-4h-2v-4h2v4Z",
+  notifications: "M12 22a2.01 2.01 0 0 0 2-2h-4a2.01 2.01 0 0 0 2 2Zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2Z",
+  menu: "M3 18h18v-2H3v2Zm0-5h18v-2H3v2Zm0-7v2h18V6H3Z",
+  search: "M9.5 3A6.5 6.5 0 1 0 13.6 14.55L19.05 20 20.5 18.55l-5.45-5.45A6.5 6.5 0 0 0 9.5 3Zm0 2a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Z",
+  manager: "M12 2 4 5v6c0 5.05 3.41 9.76 8 11 4.59-1.24 8-5.95 8-11V5l-8-3Zm0 5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 9.5c-1.67 0-3.14-.85-4-2.15.02-1.32 2.67-2.05 4-2.05 1.32 0 3.98.73 4 2.05a4.78 4.78 0 0 1-4 2.15Z",
+  team: "M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5a3 3 0 1 0 0 6Zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5a3 3 0 1 0 0 6Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z",
+  help: "M11 18h2v-2h-2v2Zm1-16A10 10 0 1 0 12 22 10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm0-14a4 4 0 0 0-4 4h2a2 2 0 1 1 3.42 1.41C12.48 12.36 11 13.27 11 15h2c0-1 .75-1.51 1.66-2.43A4 4 0 0 0 12 6Z",
+  logout: "M10.09 15.59 11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59ZM19 3H5a2 2 0 0 0-2 2v4h2V5h14v14H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z",
+  arrow: "m12 4-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8Z",
+  close: "M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.41 4.29 19.71 2.88 18.3 9.17 12 2.88 5.7l1.41-1.41L10.59 10.59 16.89 4.29l1.41 1.42Z",
+  check: "M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17Z",
+};
+
+function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="material-icon"
+      height={size}
+      viewBox="0 0 24 24"
+      width={size}
+    >
+      <path d={iconPaths[name]} />
+    </svg>
+  );
+}
+
 const SESSION_KEY = "amazing-tiles-session";
 
 function subscribeToSession(onStoreChange: () => void) {
@@ -195,16 +252,16 @@ const initialTransfers: Transfer[] = [
 ];
 
 const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: "⌂" },
-  { id: "tasks", label: "Tasks", icon: "✓" },
-  { id: "transfers", label: "Stock Transfers", icon: "⇄" },
-  { id: "warehouses", label: "Warehouses", icon: "▦" },
+  { id: "dashboard", label: "Dashboard", icon: "dashboard" as IconName },
+  { id: "tasks", label: "Tasks", icon: "tasks" as IconName },
+  { id: "transfers", label: "Stock Transfers", icon: "transfer" as IconName },
+  { id: "warehouses", label: "Warehouses", icon: "warehouse" as IconName },
 ];
 
-const typeIcons: Record<TaskType, string> = {
-  Pickup: "□",
-  Delivery: "▰",
-  Container: "▤",
+const typeIcons: Record<TaskType, IconName> = {
+  Pickup: "pickup",
+  Delivery: "delivery",
+  Container: "container",
 };
 
 function StatusPill({ status }: { status: TaskStatus | Transfer["status"] }) {
@@ -355,8 +412,8 @@ export default function Home() {
           {(mode === "manager"
             ? navItems
             : [
-                { id: "dashboard", label: "My tasks", icon: "✓" },
-                { id: "warehouses", label: "Warehouse network", icon: "▦" },
+                { id: "dashboard", label: "My tasks", icon: "tasks" as IconName },
+                { id: "warehouses", label: "Warehouse network", icon: "warehouse" as IconName },
               ]
           ).map((item) => (
             <button
@@ -367,7 +424,7 @@ export default function Home() {
                 setMobileNav(false);
               }}
             >
-              <span aria-hidden="true">{item.icon}</span>
+              <span><Icon name={item.icon} /></span>
               {item.label}
               {item.id === "transfers" && counts.transfers > 0 ? (
                 <b className="nav-count">{counts.transfers}</b>
@@ -394,11 +451,11 @@ export default function Home() {
 
         <div className="sidebar-footer">
           <button className="help-link">
-            <span>?</span>
+            <span><Icon name="help" /></span>
             Help &amp; support
           </button>
           <button className="signout-link" onClick={signOut}>
-            <span>↪</span>
+            <span><Icon name="logout" /></span>
             Sign out
           </button>
         </div>
@@ -409,7 +466,7 @@ export default function Home() {
       <div className="main-frame">
         <header className="topbar">
           <button className="menu-button" onClick={() => setMobileNav(true)} aria-label="Open navigation">
-            ☰
+            <Icon name="menu" size={24} />
           </button>
           <div className="session-context">
             <span>{mode === "manager" ? "Manager workspace" : `${activeWarehouse} warehouse`}</span>
@@ -418,7 +475,7 @@ export default function Home() {
           </div>
           <div className="top-actions">
             <button className="icon-button" aria-label="Notifications">
-              ◌
+              <Icon name="notifications" size={20} />
               <i />
             </button>
             <div className="profile">
@@ -564,7 +621,7 @@ function LoginScreen({
         </div>
 
         <div className="login-note">
-          <span>✓</span>
+          <span><Icon name="check" size={18} /></span>
           <p>
             <strong>Built for the daily warehouse workflow</strong>
             <small>Clear assignments, live statuses and fewer missed tasks.</small>
@@ -582,7 +639,7 @@ function LoginScreen({
 
           <div className="role-picker" aria-label="Choose login type">
             <button className={role === "manager" ? "active" : ""} onClick={() => setRole("manager")}>
-              <span className="role-icon">◎</span>
+              <span className="role-icon"><Icon name="manager" size={20} /></span>
               <span>
                 <strong>Manager</strong>
                 <small>All warehouses</small>
@@ -590,7 +647,7 @@ function LoginScreen({
               <i />
             </button>
             <button className={role === "warehouse" ? "active" : ""} onClick={() => setRole("warehouse")}>
-              <span className="role-icon">▦</span>
+              <span className="role-icon"><Icon name="team" size={20} /></span>
               <span>
                 <strong>Warehouse team</strong>
                 <small>Assigned tasks</small>
@@ -656,7 +713,7 @@ function LoginScreen({
 
             <button className="login-submit" type="submit">
               Sign in as {role === "manager" ? "Manager" : "Warehouse Team"}
-              <span>→</span>
+              <span><Icon name="arrow" size={18} /></span>
             </button>
           </form>
 
@@ -692,10 +749,10 @@ function Dashboard({
   onTransfer: () => void;
 }) {
   const metrics = [
-    { label: "Pending today", value: counts.pending, note: "Across 3 warehouses", icon: "◷", tone: "blue" },
-    { label: "Completed today", value: counts.completed, note: "2 completed on time", icon: "✓", tone: "green" },
-    { label: "Delayed", value: counts.delayed, note: "Needs your attention", icon: "!", tone: "red" },
-    { label: "Stock requests", value: counts.transfers, note: "Waiting for approval", icon: "⇄", tone: "amber" },
+    { label: "Pending today", value: counts.pending, note: "Across 3 warehouses", icon: "schedule" as IconName, tone: "blue" },
+    { label: "Completed today", value: counts.completed, note: "2 completed on time", icon: "check" as IconName, tone: "green" },
+    { label: "Delayed", value: counts.delayed, note: "Needs your attention", icon: "warning" as IconName, tone: "red" },
+    { label: "Stock requests", value: counts.transfers, note: "Waiting for approval", icon: "transfer" as IconName, tone: "amber" },
   ];
 
   return (
@@ -703,7 +760,7 @@ function Dashboard({
       <section className="metric-grid" aria-label="Operations summary">
         {metrics.map((metric) => (
           <article className="summary-card" key={metric.label}>
-            <div className={`metric-icon ${metric.tone}`}>{metric.icon}</div>
+            <div className={`metric-icon ${metric.tone}`}><Icon name={metric.icon} size={22} /></div>
             <div>
               <p>{metric.label}</p>
               <strong>{String(metric.value).padStart(2, "0")}</strong>
@@ -724,7 +781,7 @@ function Dashboard({
           <div className="transfer-mini-list">
             {transfers.slice(0, 2).map((transfer) => (
               <button onClick={onTransfer} key={transfer.id}>
-                <div className="route-badge">⇄</div>
+                <div className="route-badge"><Icon name="transfer" size={20} /></div>
                 <div>
                   <strong>
                     {transfer.from} <span>→</span> {transfer.to}
@@ -800,7 +857,7 @@ function TaskTable({ tasks }: { tasks: Task[] }) {
               </td>
               <td>
                 <span className={`type-tag type-${task.type.toLowerCase()}`}>
-                  <i>{typeIcons[task.type]}</i>
+                  <i><Icon name={typeIcons[task.type]} size={16} /></i>
                   {task.type}
                 </span>
               </td>
@@ -844,7 +901,7 @@ function TasksView({
     <section className="panel full-panel">
       <div className="filter-bar">
         <label className="search-field">
-          <span>⌕</span>
+          <span><Icon name="search" size={20} /></span>
           <input
             aria-label="Search tasks"
             value={search}
@@ -976,7 +1033,7 @@ function WarehousesView({ tasks }: { tasks: Task[] }) {
         return (
           <article className="warehouse-card" key={warehouse.name}>
             <div className="warehouse-card-top">
-              <div className="warehouse-icon">▦</div>
+              <div className="warehouse-icon"><Icon name="warehouse" size={22} /></div>
               <StatusPill status="Approved" />
             </div>
             <p>{warehouse.label}</p>
@@ -1043,7 +1100,7 @@ function WarehouseDashboard({
         </div>
         {visible.map((task) => (
           <article className={task.warehouse === activeWarehouse ? "own-task" : ""} key={task.id}>
-            <div className={`task-type-icon type-${task.type.toLowerCase()}`}>{typeIcons[task.type]}</div>
+            <div className={`task-type-icon type-${task.type.toLowerCase()}`}><Icon name={typeIcons[task.type]} size={22} /></div>
             <div className="mobile-task-copy">
               <div>
                 <strong>{task.invoice}</strong>
@@ -1052,8 +1109,8 @@ function WarehouseDashboard({
               <h3>{task.description}</h3>
               <p>{task.items}</p>
               <div className="task-meta">
-                <span>◷ {task.displayDate}</span>
-                <span>▦ {task.warehouse}</span>
+                <span><Icon name="schedule" size={15} /> {task.displayDate}</span>
+                <span><Icon name="warehouse" size={15} /> {task.warehouse}</span>
               </div>
             </div>
             <div className="task-card-actions">
@@ -1097,7 +1154,7 @@ function NewTaskModal({
             <p>Operations</p>
             <h2 id="new-task-title">Create new task</h2>
           </div>
-          <button onClick={onClose} aria-label="Close">×</button>
+          <button onClick={onClose} aria-label="Close"><Icon name="close" size={20} /></button>
         </div>
         <div className="type-tabs">
           {(["Pickup", "Delivery", "Container"] as TaskType[]).map((type) => (
@@ -1106,7 +1163,7 @@ function NewTaskModal({
               key={type}
               onClick={() => setSelectedType(type)}
             >
-              <span>{typeIcons[type]}</span>
+              <span><Icon name={typeIcons[type]} size={18} /></span>
               {type}
             </button>
           ))}
